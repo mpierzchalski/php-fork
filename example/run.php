@@ -41,7 +41,7 @@ if (empty($_url) || empty($_requestsPerSecond) || empty($_timeLimit) || empty($_
     exit;
 }
 
-$fork = new \PHPFork\Fork($_requestsPerSecond, 1000, $_timeLimit, 1);
+$fork = new \PHPFork\Fork($_requestsPerSecond, 10, $_timeLimit, 1);
 $fork->execute(function() use($_url, $_timeOut) {
 
     // create a new cURL resource
@@ -61,7 +61,7 @@ $fork->execute(function() use($_url, $_timeOut) {
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
     curl_setopt($ch, CURLOPT_TIMEOUT, 1);
     curl_setopt($ch, CURLOPT_ENCODING, "utf-8");
-    
+
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
