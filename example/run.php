@@ -15,7 +15,8 @@ require_once($handlerDir . DIRECTORY_SEPARATOR . 'ExecResultsHandler.php');
 require_once($handlerDir . DIRECTORY_SEPARATOR . 'PidResultsHandler.php');
 require_once($root . 'Fork.php');
 
-$_url = $_requestsPerSecond = $_timeOut = $_timeLimit = null;
+$_debug = 1;
+$_url   = $_requestsPerSecond = $_timeOut = $_timeLimit = null;
 
 if (is_array($_SERVER['argv'])) {
     foreach($_SERVER['argv'] as $argv) {
@@ -27,6 +28,7 @@ if (is_array($_SERVER['argv'])) {
                 case 'r'    : $_requestsPerSecond = $out['value'];  break;
                 case 't'    : $_timeOut = $out['value'];            break;
                 case 'l'    : $_timeLimit = $out['value'];          break;
+                case 'd'    : $_debug = $out['value'];              break;
             }
         }
     }
@@ -41,7 +43,7 @@ if (empty($_url) || empty($_requestsPerSecond) || empty($_timeLimit) || empty($_
     exit;
 }
 
-$fork = new \PHPFork\Fork($_requestsPerSecond, 10, $_timeLimit, 1);
+$fork = new \PHPFork\Fork($_requestsPerSecond, 10, $_timeLimit, $_debug);
 $fork->execute(function() use($_url, $_timeOut) {
 
     // create a new cURL resource
@@ -68,10 +70,10 @@ $fork->execute(function() use($_url, $_timeOut) {
     curl_exec($ch);
 
     if (curl_errno($ch)) {
-        print curl_errno($ch) . ": " . curl_error($ch);
+        print curl_errno($ch) . ": " . curl_error($ch) . PHP_EOL;
     }
 
-    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);;
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
     // close cURL resource, and free up system resources
     curl_close($ch);
