@@ -3,7 +3,7 @@
 namespace PHPFork\Handler;
 
 /**
- * @package   SmfX
+ * @package   php-fork
  * @author    Michał Pierzchalski <michal.pierzchalski@gmail.com>
  * @license   MIT
  */
@@ -11,16 +11,16 @@ namespace PHPFork\Handler;
 class PidResultsHandler
 {
 
-    private $_startPid = null;
+    private $startPid = null;
 
-    private $_execute = null;
+    private $execute = null;
 
-    private $_killPid = null;
+    private $killPid = null;
 
     /**
      * @var null|ExecResultsHandler
      */
-    private $_execHandler = null;
+    private $execHandler = null;
 
     /**
      * Konstuktor
@@ -29,7 +29,7 @@ class PidResultsHandler
      */
     function __construct(ExecResultsHandler $_execHandler)
     {
-        $this->_execHandler = $_execHandler;
+        $this->execHandler = $_execHandler;
     }
 
     /**
@@ -37,7 +37,7 @@ class PidResultsHandler
      */
     public function getExecHandler()
     {
-        return $this->_execHandler;
+        return $this->execHandler;
     }
 
     /**
@@ -46,7 +46,7 @@ class PidResultsHandler
      */
     public function setStartPid($startPid)
     {
-        $this->_startPid = $startPid;
+        $this->startPid = $startPid;
         return $this;
     }
 
@@ -55,7 +55,7 @@ class PidResultsHandler
      */
     public function getStartPid()
     {
-        return $this->_startPid;
+        return $this->startPid;
     }
 
     /**
@@ -64,7 +64,7 @@ class PidResultsHandler
      */
     public function setExecute($execute)
     {
-        $this->_execute = $execute;
+        $this->execute = $execute;
         return $this;
     }
 
@@ -73,7 +73,7 @@ class PidResultsHandler
      */
     public function getExecute()
     {
-        return $this->_execute;
+        return $this->execute;
     }
 
     /**
@@ -82,7 +82,7 @@ class PidResultsHandler
      */
     public function setKillPid($killPid)
     {
-        $this->_killPid = $killPid;
+        $this->killPid = $killPid;
         return $this;
     }
 
@@ -91,7 +91,7 @@ class PidResultsHandler
      */
     public function getKillPid()
     {
-        return $this->_killPid;
+        return $this->killPid;
     }
 
 }

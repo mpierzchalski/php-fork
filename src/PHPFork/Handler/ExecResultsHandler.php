@@ -1,9 +1,10 @@
 <?php
 
 namespace PHPFork\Handler;
+use PHPFork\Subscriber;
 
 /**
- * @package   SmfX
+ * @package   php-fork
  * @author    Michał Pierzchalski <michal.pierzchalski@gmail.com>
  * @license   MIT
  */
@@ -11,85 +12,62 @@ namespace PHPFork\Handler;
 class ExecResultsHandler
 {
 
-    private $_beginExecute = null;
-
-    private $_beginLoop = null;
-
-    private $_endLoop = null;
-
-    private $_endExecute = null;
+    /**
+     * @var array
+     */
+    private $beginExecute = [];
 
     /**
-     * @param null $beginExecute
+     * @var array
+     */
+    private $endExecute = [];
+
+    /**
+     * @param \PHPFork\Subscriber $subscriber
+     * @param mixed               $beginExecute
      * @return $this
      */
-    public function setBeginExecute($beginExecute)
+    public function setBeginExecute(Subscriber $subscriber, $beginExecute)
     {
-        $this->_beginExecute = $beginExecute;
+        $this->beginExecute[get_class($subscriber)] = $beginExecute;
         return $this;
     }
 
     /**
-     * @return null
+     * @param Subscriber $subscriber
+     * @return mixed
      */
-    public function getBeginExecute()
+    public function getBeginExecute(Subscriber $subscriber)
     {
-        return $this->_beginExecute;
+        $class = get_class($subscriber);
+        if (isset($this->beginExecute[$class])) {
+            return $this->beginExecute[$class];
+        }
+        return null;
     }
 
     /**
-     * @param null $beginLoop
+     * @param Subscriber $subscriber
+     * @param mixed      $endExecute
      * @return $this
      */
-    public function setBeginLoop($beginLoop)
+    public function setEndExecute(Subscriber $subscriber, $endExecute)
     {
-        $this->_beginLoop = $beginLoop;
+        $this->endExecute[get_class($subscriber)] = $endExecute;
         return $this;
     }
 
     /**
+     * @param Subscriber $subscriber
      * @return null
      */
-    public function getBeginLoop()
+    public function getEndExecute(Subscriber $subscriber)
     {
-        return $this->_beginLoop;
+        $class = get_class($subscriber);
+        if (isset($this->endExecute[$class])) {
+            return $this->endExecute[$class];
+        }
+        return null;
     }
-
-    /**
-     * @param null $endExecute
-     * @return $this
-     */
-    public function setEndExecute($endExecute)
-    {
-        $this->_endExecute = $endExecute;
-        return $this;
-    }
-
-    /**
-     * @return null
-     */
-    public function getEndExecute()
-    {
-        return $this->_endExecute;
-    }
-
-    /**
-     * @param null $endLoop
-     * @return $this
-     */
-    public function setEndLoop($endLoop)
-    {
-        $this->_endLoop = $endLoop;
-        return $this;
-    }
-
-    /**
-     * @return null
-     */
-    public function getEndLoop()
-    {
-        return $this->_endLoop;
-    }
-
 
 }

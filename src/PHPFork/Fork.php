@@ -4,202 +4,145 @@ namespace PHPFork;
 
 declare(ticks = 1);
 
+use PHPFork\Exception\SubscriberException;
 use PHPFork\Handler\ExecResultsHandler;
 use PHPFork\Handler\PidResultsHandler;
 
 /**
- * @package   SmfX
+ * @package   php-fork
  * @author    Michał Pierzchalski <michal.pierzchalski@gmail.com>
  * @license   MIT
  */
 class Fork
 {
-    const DEBUG_ITEM = 1;
-    const DEBUG_SUMMARY = 2;
-
     const LISTENER_BEGINEXECUTE = 'beginExecute';
-    const LISTENER_BEGINPROC    = 'beginProcess';
     const LISTENER_STARTPID     = 'startPid';
     const LISTENER_KILLPID      = 'killPid';
-    const LISTENER_ENDLOOP      = 'endLoop';
     const LISTENER_ENDEXECUTE   = 'endExecute';
 
     /**
      * @var Fork
      */
-    static public $instance = null;
+    public static $instance = null;
 
     /**
      * @var float
      */
-    private $_requestTime = null;
+    private $requestTime;
 
     /**
      * @var array
      */
-    private $_childPids = array();
+    private $forkedPids = [];
 
     /**
      * @var array
      */
-    private $_listeners = array();
+    private $subscribers = [];
 
     /**
      * @var null|ExecResultsHandler
      */
-    private $_execResults = null;
+    private $execResults;
 
     /**
      * @var null|PidResultsHandler
      */
-    private $_pidResults = null;
+    private $pidResults;
 
     /**
      * @var int
      */
-    protected $_timeLimit = 60;
+    protected $timeLimit = 60;
 
     /**
      * @var int
      */
-    protected $_loopExecutionTime = 1000;
-
-    /**
-     * @var int
-     */
-    protected $_maxProcesses = 2;
-
-    /**
-     * @var null
-     */
-    protected $_debugMode = null;
+    protected $maxParallelProcesses = 2;
 
     /**
      * Construct
      *
-     * @param int $maxProcesses
-     * @param int $loopExecutionTime - w ms
+     * @param int $maxParallelProcesses
      * @param int $timeLimit - w s
-     * @param int $debugMode
      */
-    public function __construct($maxProcesses = null, $loopExecutionTime = null, $timeLimit = null, $debugMode = null)
+    public function __construct($maxParallelProcesses = null, $timeLimit = null)
     {
-        $this->_requestTime  = $_SERVER['REQUEST_TIME_FLOAT'];
-        if (null !== $maxProcesses) $this->_maxProcesses = $maxProcesses;
-        if (null !== $loopExecutionTime) $this->_loopExecutionTime = $loopExecutionTime;
-        if (null !== $timeLimit) $this->_timeLimit = $timeLimit;
-        if (null !== $debugMode) $this->_debugMode = $debugMode;
+        if (null !== $maxParallelProcesses) {
+            $this->maxParallelProcesses = $maxParallelProcesses;
+        }
+        if (null !== $timeLimit) {
+            $this->timeLimit = $timeLimit;
+        }
 
-        $this->_execResults = new ExecResultsHandler();
+        $this->requestTime = $_SERVER['REQUEST_TIME_FLOAT'];
+        $this->setExecResults(new ExecResultsHandler());
     }
 
     /**
-     * @return null
+     * @param null|\PHPFork\Handler\ExecResultsHandler $execResults
      */
-    public function getDebugMode()
+    public function setExecResults($execResults)
     {
-        return $this->_debugMode;
+        $this->execResults = $execResults;
     }
 
     /**
-     * @param null $debugMode
-     * @return $this
+     * @return null|\PHPFork\Handler\ExecResultsHandler
      */
-    public function setDebugMode($debugMode)
+    public function getExecResults()
     {
-        $this->_debugMode = $debugMode;
-        return $this;
+        return $this->execResults;
+    }
+
+    /**
+     * @param int $maxParallelProcesses
+     */
+    public function setMaxParallelProcesses($maxParallelProcesses)
+    {
+        $this->maxParallelProcesses = $maxParallelProcesses;
     }
 
     /**
      * @return int
      */
-    public function getMaxProcesses()
+    public function getMaxParallelProcesses()
     {
-        return $this->_maxProcesses;
+        return $this->maxParallelProcesses;
     }
 
     /**
-     * @param int $maxProcesses
-     * @return $this
+     * @param null|\PHPFork\Handler\PidResultsHandler $pidResults
      */
-    public function setMaxProcesses($maxProcesses)
+    public function setPidResults($pidResults)
     {
-        $this->_maxProcesses = $maxProcesses;
-        return $this;
+        $this->pidResults = $pidResults;
     }
 
     /**
-     * @return int|null
+     * @return null|\PHPFork\Handler\PidResultsHandler
      */
-    public function getTimeLimit()
+    public function getPidResults()
     {
-        return $this->_timeLimit;
+        return $this->pidResults;
     }
 
     /**
      * @param int $timeLimit
-     * @return $this
      */
     public function setTimeLimit($timeLimit)
     {
-        $this->_timeLimit = $timeLimit;
-        return $this;
+        $this->timeLimit = $timeLimit;
     }
 
     /**
      * @return int
      */
-    public function getLoopExecutionTime()
+    public function getTimeLimit()
     {
-        return $this->_loopExecutionTime;
+        return $this->timeLimit;
     }
 
-    /**
-     * @param int $loopExecutionTime
-     * @return $this
-     */
-    public function setLoopExecutionTime($loopExecutionTime)
-    {
-        $this->_loopExecutionTime = $loopExecutionTime;
-        return $this;
-    }
-
-    /**
-     * @param ExecResultsHandler|null $execResults
-     * @return $this
-     */
-    public function setExecResults($execResults)
-    {
-        $this->_execResults = $execResults;
-        return $this;
-    }
-
-    /**
-     * @return ExecResultsHandler|null
-     */
-    public function getExecResults()
-    {
-        return $this->_execResults;
-    }
-
-    /**
-     * @param PidResultsHandler|null $pidResults
-     * @return $this
-     */
-    public function setPidResults($pidResults)
-    {
-        $this->_pidResults = $pidResults;
-        return $this;
-    }
-
-    /**
-     * @return PidResultsHandler|null
-     */
-    public function getPidResults()
-    {
-        return $this->_pidResults;
-    }
 
     /**
      * Executes
@@ -209,98 +152,74 @@ class Fork
      */
     public function execute(\Closure $e)
     {
-        $_instance = $this;
-        $this->_launchListener(self::LISTENER_BEGINEXECUTE);
+        $this->launchSubscribers(self::LISTENER_BEGINEXECUTE);
         do {
-            $this->_launchListener(self::LISTENER_BEGINLOOP);
             $loopStartTime = microtime(true);
             $pid           = pcntl_fork();
             if ($pid > 0) {
-                $this->_childPids[] = $pid;
+                $this->forkedPids[] = $pid;
             } else if ($pid == 0) {
-                $this->_pidResults = new PidResultsHandler($this->getExecResults());
+                $this->pidResults = new PidResultsHandler($this->getExecResults());
 
-                $this->_launchListener(self::LISTENER_STARTPID);
-//                if ($_instance->getDebugMode() == self::DEBUG_ITEM) {
-//                    print sprintf('Starting pid %d' . PHP_EOL, posix_getpid());
-//                }
+                // launching STARTPID listener
+                $this->launchSubscribers(self::LISTENER_STARTPID);
 
                 // launching execute() and saves the result
-                $this->_pidResults->setExecute(call_user_func($e, $this->_pidResults));
+                $this->pidResults->setExecute(call_user_func($e, $this->pidResults));
 
-                pcntl_signal(SIGTERM, function($signal) use ($_instance, $loopStartTime) {
-                    $this->_launchListener(self::LISTENER_KILLPID);
-//                    if ($_instance->getDebugMode() == self::DEBUG_ITEM) {
-//                        print sprintf('End of pid %d in time: %s ms; SIG => %d' . PHP_EOL,
-//                            posix_getpid(),
-//                            ((microtime(true) - $loopStartTime) * 1000),
-//                            $signal
-//                        );
-//                    }
+                pcntl_signal(SIGTERM, function($signal) use ($loopStartTime) {
+                    // launching KILLPID listener
+                    $this->launchSubscribers(self::LISTENER_KILLPID);
                 });
 
                 posix_kill(posix_getpid(), SIGTERM);
                 exit;
             }
 
-            while (count($this->_childPids) >= $this->getMaxProcesses()) {
-                $thisPid = pcntl_waitpid(-1, $status, WNOHANG);
-                foreach ($this->_childPids as $key => $childPid) {
-                    if($thisPid == $childPid) unset($this->_childPids[$key]);
+            while (count($this->forkedPids) >= $this->getMaxParallelProcesses()) {
+                $executedPid = pcntl_waitpid(-1, $status, WNOHANG);
+                if (($foundPidKey = array_search($executedPid, $this->forkedPids)) !== false) {
+                    unset($this->forkedPids[$foundPidKey]);
                 }
                 usleep(100);
             }
-            $loopExecutionTimeMs = (microtime(true) - $loopStartTime) * 1000;
-            if ($loopExecutionTimeMs < $this->getLoopExecutionTime()) {
-                $sleepingTimeMs = $this->getLoopExecutionTime() - $loopExecutionTimeMs;
-//                if ($this->getDebugMode() == self::DEBUG_ITEM) {
-//                    print sprintf('Sleeping pid %d for: %s ms' . PHP_EOL, posix_getpid(), $sleepingTimeMs);
-//                }
-                usleep($sleepingTimeMs * 1000);
-            }
-            $this->_launchListener(self::LISTENER_ENDLOOP);
-        } while (((microtime(true) - $this->_requestTime) <= ($this->getTimeLimit()-2)));
 
-        $this->_launchListener(self::LISTENER_ENDEXECUTE);
-//        if ($this->getDebugMode() == self::DEBUG_SUMMARY) {
-//            print sprintf('End of file %s in time: %s ms' . PHP_EOL,
-//                $_SERVER['SCRIPT_NAME'],
-//                ((microtime(true) - $this->_requestTime) * 1000)
-//            );
-//        }
+        } while (((microtime(true) - $this->requestTime) <= ($this->getTimeLimit()-2)));
+
+        // launching ENDEXECUTE listener
+        $this->launchSubscribers(self::LISTENER_ENDEXECUTE);
     }
 
     /**
-     * Adds listener
+     * Registers subscriber
      *
-     * @param string $type - self::LISTENER_*
-     * @param \Closure $e
+     * @param Subscriber $subscriber
      * @return $this
-     * @throws \Exception
+     * @throws SubscriberException
      */
-    public function addListener($type, \Closure $e)
+    public function registerSubscriber($subscriber)
     {
-        if (array_key_exists($type, $this->_listeners)) {
-            throw new \Exception('This listener is already added : ' . $type . '!');
+        if (in_array($subscriber, $this->subscribers, true)) {
+            throw new SubscriberException(sprintf("Subscriber %s is already registered!", get_class($subscriber)));
         }
-        $this->_listeners[$type] = $e;
+        $this->subscribers[] = $subscriber;
         return $this;
     }
 
     /**
-     * Launches listeners
+     * Launches subscribers
      *
      * @param string $type - self::LISTENER_*
      */
-    private function _launchListener($type)
+    private function launchSubscribers($type)
     {
-        if (!array_key_exists($type, $this->_listeners)) {
-            return;
-        }
         $resultHandler = (in_array($type, array(self::LISTENER_STARTPID, self::LISTENER_KILLPID)))
-            ? $this->getPidResults() : $this->getExecResults();
+            ? $this->getPidResults()
+            : $this->getExecResults();
 
-        $result = call_user_func($this->_listeners[$type], $resultHandler);
-        $resultHandler->{'set' . ucfirst($type)}($result);
+        foreach ($this->subscribers as &$subscriber) {
+            $result = call_user_func(array($subscriber, $type), $resultHandler);
+            $resultHandler->{'set' . ucfirst($type)}($subscriber, $result);
+        }
     }
 }
