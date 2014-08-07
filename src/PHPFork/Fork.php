@@ -18,7 +18,7 @@ class Fork
     const DEBUG_SUMMARY = 2;
 
     const LISTENER_BEGINEXECUTE = 'beginExecute';
-    const LISTENER_BEGINLOOP    = 'beginLoop';
+    const LISTENER_BEGINPROC    = 'beginProcess';
     const LISTENER_STARTPID     = 'startPid';
     const LISTENER_KILLPID      = 'killPid';
     const LISTENER_ENDLOOP      = 'endLoop';
@@ -221,22 +221,22 @@ class Fork
                 $this->_pidResults = new PidResultsHandler($this->getExecResults());
 
                 $this->_launchListener(self::LISTENER_STARTPID);
-                if ($_instance->getDebugMode() == self::DEBUG_ITEM) {
-                    print sprintf('Starting pid %d' . PHP_EOL, posix_getpid());
-                }
+//                if ($_instance->getDebugMode() == self::DEBUG_ITEM) {
+//                    print sprintf('Starting pid %d' . PHP_EOL, posix_getpid());
+//                }
 
                 // launching execute() and saves the result
                 $this->_pidResults->setExecute(call_user_func($e, $this->_pidResults));
 
                 pcntl_signal(SIGTERM, function($signal) use ($_instance, $loopStartTime) {
                     $this->_launchListener(self::LISTENER_KILLPID);
-                    if ($_instance->getDebugMode() == self::DEBUG_ITEM) {
-                        print sprintf('End of pid %d in time: %s ms; SIG => %d' . PHP_EOL,
-                            posix_getpid(),
-                            ((microtime(true) - $loopStartTime) * 1000),
-                            $signal
-                        );
-                    }
+//                    if ($_instance->getDebugMode() == self::DEBUG_ITEM) {
+//                        print sprintf('End of pid %d in time: %s ms; SIG => %d' . PHP_EOL,
+//                            posix_getpid(),
+//                            ((microtime(true) - $loopStartTime) * 1000),
+//                            $signal
+//                        );
+//                    }
                 });
 
                 posix_kill(posix_getpid(), SIGTERM);
@@ -253,21 +253,21 @@ class Fork
             $loopExecutionTimeMs = (microtime(true) - $loopStartTime) * 1000;
             if ($loopExecutionTimeMs < $this->getLoopExecutionTime()) {
                 $sleepingTimeMs = $this->getLoopExecutionTime() - $loopExecutionTimeMs;
-                if ($this->getDebugMode() == self::DEBUG_ITEM) {
-                    print sprintf('Sleeping pid %d for: %s ms' . PHP_EOL, posix_getpid(), $sleepingTimeMs);
-                }
+//                if ($this->getDebugMode() == self::DEBUG_ITEM) {
+//                    print sprintf('Sleeping pid %d for: %s ms' . PHP_EOL, posix_getpid(), $sleepingTimeMs);
+//                }
                 usleep($sleepingTimeMs * 1000);
             }
             $this->_launchListener(self::LISTENER_ENDLOOP);
         } while (((microtime(true) - $this->_requestTime) <= ($this->getTimeLimit()-2)));
 
         $this->_launchListener(self::LISTENER_ENDEXECUTE);
-        if ($this->getDebugMode() == self::DEBUG_SUMMARY) {
-            print sprintf('End of file %s in time: %s ms' . PHP_EOL,
-                $_SERVER['SCRIPT_NAME'],
-                ((microtime(true) - $this->_requestTime) * 1000)
-            );
-        }
+//        if ($this->getDebugMode() == self::DEBUG_SUMMARY) {
+//            print sprintf('End of file %s in time: %s ms' . PHP_EOL,
+//                $_SERVER['SCRIPT_NAME'],
+//                ((microtime(true) - $this->_requestTime) * 1000)
+//            );
+//        }
     }
 
     /**
