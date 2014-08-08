@@ -1,6 +1,7 @@
 <?php
 
 namespace PHPFork\Handler;
+use PHPFork\Subscriber;
 
 /**
  * @package   php-fork
@@ -11,25 +12,34 @@ namespace PHPFork\Handler;
 class PidResultsHandler
 {
 
-    private $startPid = null;
-
-    private $execute = null;
-
-    private $killPid = null;
+    /**
+     * @var array
+     */
+    private $startPid = [];
 
     /**
-     * @var null|ExecResultsHandler
+     * @var mixed
      */
-    private $execHandler = null;
+    private $execute;
+
+    /**
+     * @var array
+     */
+    private $killPid = [];
+
+    /**
+     * @var ExecResultsHandler
+     */
+    private $execHandler;
 
     /**
      * Konstuktor
      *
-     * @param $_execHandler
+     * @param $execHandler
      */
-    function __construct(ExecResultsHandler $_execHandler)
+    function __construct(ExecResultsHandler $execHandler)
     {
-        $this->execHandler = $_execHandler;
+        $this->execHandler = $execHandler;
     }
 
     /**
@@ -41,25 +51,31 @@ class PidResultsHandler
     }
 
     /**
-     * @param null $startPid
+     * @param Subscriber    $subscriber
+     * @param int           $startPid
      * @return $this
      */
-    public function setStartPid($startPid)
+    public function setStartPid(Subscriber $subscriber, $startPid)
     {
-        $this->startPid = $startPid;
+        $this->startPid[get_class($subscriber)] = $startPid;
         return $this;
     }
 
     /**
+     * @param Subscriber $subscriber
      * @return null
      */
-    public function getStartPid()
+    public function getStartPid(Subscriber $subscriber)
     {
-        return $this->startPid;
+        $class = get_class($subscriber);
+        if (isset($this->startPid[$class])) {
+            return $this->startPid[$class];
+        }
+        return null;
     }
 
     /**
-     * @param null $execute
+     * @param mixed $execute
      * @return $this
      */
     public function setExecute($execute)
@@ -69,7 +85,7 @@ class PidResultsHandler
     }
 
     /**
-     * @return null
+     * @return mixed
      */
     public function getExecute()
     {
@@ -77,21 +93,27 @@ class PidResultsHandler
     }
 
     /**
-     * @param null $killPid
+     * @param Subscriber    $subscriber
+     * @param mixed         $killPid
      * @return $this
      */
-    public function setKillPid($killPid)
+    public function setKillPid(Subscriber $subscriber, $killPid)
     {
-        $this->killPid = $killPid;
+        $this->killPid[get_class($subscriber)] = $killPid;
         return $this;
     }
 
     /**
+     * @param Subscriber $subscriber
      * @return null
      */
-    public function getKillPid()
+    public function getKillPid(Subscriber $subscriber)
     {
-        return $this->killPid;
+        $class = get_class($subscriber);
+        if (isset($this->killPid[$class])) {
+            return $this->killPid[$class];
+        }
+        return null;
     }
 
 }

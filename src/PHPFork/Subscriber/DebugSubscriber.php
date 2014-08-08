@@ -10,27 +10,41 @@ namespace PHPFork\Subscriber;
 
 use PHPFork\Handler\ExecResultsHandler;
 use PHPFork\Handler\PidResultsHandler;
+use PHPFork\Subscriber;
 
-class DebugSubscriber
+class DebugSubscriber extends Subscriber
 {
+    /**
+     * {@inheritdoc}
+     */
     public function beginExecute()
     {
-        return 1;
+        print 'beginExecute at: ' . date('c');
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function startPid(PidResultsHandler $resultHandler)
     {
-        return $resultHandler->getExecHandler()->getBeginExecute($this)*10;
+        return microtime(true);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function killPid(PidResultsHandler $resultHandler)
     {
-        print 'KillPid: ' . $resultHandler->getStartPid()*10;
+        $executionPidTime = round((microtime(true)-$resultHandler->getStartPid($this))*1000);
+        print sprintf('killPid in time: %s ms', $executionPidTime) . PHP_EOL;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function endExecute(ExecResultsHandler $resultHandler)
     {
-        print 'Koniec: ' . $resultHandler->getBeginExecute($this);
+        print 'Koniec';
     }
 
 } 
