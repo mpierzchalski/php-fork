@@ -44,7 +44,7 @@ class DebugSubscriber extends Subscriber
      */
     public function endExecute(ExecResultsHandler $resultHandler)
     {
-        print 'Koniec';
+        print 'End.';
     }
 
 } 
