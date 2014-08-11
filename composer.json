@@ -4,17 +4,17 @@
     "minimum-stability": "dev",
     "extra": {
         "branch-alias": {
-            "dev-master": "1.0"
+            "dev-master": "1.0-dev"
         }
     },
-	"license": "MIT",
+    "license": "MIT",
     "authors": [
         {
             "name": "Michał Pierzchalski",
             "email": "michal.pierzchalski@gmail.com"
         }
     ],
-	"require": {
+    "require": {
         "php": ">=5.4.0"
     },
     "autoload": {
