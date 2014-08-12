@@ -195,6 +195,60 @@ class Fork
     }
 
     /**
+     * Executes collection
+     *
+     * @param $collection
+     * @return \Generator
+     */
+    public function executeCollection($collection)
+    {
+        // launching BEGINEXECUTE listener
+        $this->launchSubscribers(self::LISTENER_BEGINEXECUTE);
+        foreach ($collection as $k => $e) {
+
+            $pid = pcntl_fork();
+            if ($pid > 0) {
+                $this->forkedPids[] = $pid;
+            } else if ($pid == 0) {
+                $this->pidResults = new PidResultsHandler(posix_getppid(), posix_getpid(), $this->getExecResults(), $k);
+
+                // launching STARTPID listener
+                $this->launchSubscribers(self::LISTENER_STARTPID);
+
+                // launching execute() and saves the result
+                $this->pidResults->setExecute(call_user_func($e, $this->pidResults));
+
+                pcntl_signal(SIGTERM, function($signal) {
+                    // launching KILLPID listener
+                    $this->launchSubscribers(self::LISTENER_KILLPID);
+                });
+
+                posix_kill(posix_getpid(), SIGTERM);
+                exit;
+            }
+
+            // Checks if maximum amount of forked processes has been exceeded
+            while (count($this->forkedPids) >= $this->getMaxParallelProcesses()) {
+                $this->unsetForkedPid(pcntl_waitpid(-1, $status, WNOHANG));
+                usleep(100);
+            }
+
+            if ((microtime(true) - $this->requestTime) >= $this->getTimeLimit()) {
+                break;
+            }
+        }
+
+        // Checks if all forked processes are ended
+        while (count($this->forkedPids)) {
+            $this->unsetForkedPid(pcntl_waitpid(-1, $status, WNOHANG));
+            usleep(100);
+        }
+
+        // launching ENDEXECUTE listener
+        $this->launchSubscribers(self::LISTENER_ENDEXECUTE);
+    }
+
+    /**
      * Unset pid
      *
      * @param int $pid
@@ -203,20 +257,6 @@ class Fork
     {
         if (($foundPidKey = array_search($pid, $this->forkedPids)) !== false) {
             unset($this->forkedPids[$foundPidKey]);
-        }
-    }
-
-    /**
-     * Executes collection
-     *
-     * @param $collection
-     * @return \Generator
-     */
-    public function executeCollection($collection)
-    {
-        foreach ($collection as $value) {
-            $this->execute($value);
-            yield $value;
         }
     }
 

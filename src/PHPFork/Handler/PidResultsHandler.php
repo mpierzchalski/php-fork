@@ -11,6 +11,20 @@ use PHPFork\Subscriber;
 
 class PidResultsHandler
 {
+    /**
+     * @var int
+     */
+    private $parentPid;
+
+    /**
+     * @var int
+     */
+    private $pid;
+
+    /**
+     * @var string|null
+     */
+    private $pidCustomKey;
 
     /**
      * @var array
@@ -33,13 +47,43 @@ class PidResultsHandler
     private $execHandler;
 
     /**
-     * Konstuktor
+     * Construct
      *
-     * @param $execHandler
+     * @param int                $parentPid
+     * @param int                $pid
+     * @param ExecResultsHandler $execHandler
+     * @param string             $pidCustomKey
      */
-    function __construct(ExecResultsHandler $execHandler)
+    function __construct($parentPid, $pid, ExecResultsHandler $execHandler, $pidCustomKey = null)
     {
-        $this->execHandler = $execHandler;
+        $this->parentPid    = $parentPid;
+        $this->pid          = $pid;
+        $this->pidCustomKey = $pidCustomKey;
+        $this->execHandler  = $execHandler;
+    }
+
+    /**
+     * @return int
+     */
+    public function getParentPid()
+    {
+        return $this->parentPid;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPid()
+    {
+        return $this->pid;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getPidCustomKey()
+    {
+        return $this->pidCustomKey;
     }
 
     /**
